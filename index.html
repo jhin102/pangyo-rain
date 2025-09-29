@@ -161,7 +161,7 @@
             10: ['하이퍼바이저에서 리시브패킷 에러가 발생하고 있습니다.', 
             '구 버전의 클라이언트를 가진 유저는 DLC를 diff 발생 분 부터 다시 받게 됩니다.', 
             '내외부망에서 간헐적으로 504 게이트웨이 타임아웃 메시지가 확인되고 있습니다.', 
-            '금일 AWS DX 구간의 네트웨크 순단이 발생하였습니다.']
+            '금일 AWS DX 구간의 네트워크 순단이 발생하였습니다.']
         };
 
         let gameState = {
@@ -239,7 +239,7 @@
             gameState.isPlaying = true;
             input.disabled = false;
             input.focus();
-            gameOverDiv.style.display = 'none';
+            requestAnimationFrame(gameLoop);
         }
 
         function updateLevel() {
@@ -348,8 +348,21 @@
             requestAnimationFrame(gameLoop);
         });
 
+        startBtn.addEventListener('click', startGame);
+        
+        restartBtn.addEventListener('click', () => {
+            init();
+            startGame();
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkInput();
+            }
+        });
+
         init();
-        requestAnimationFrame(gameLoop);
+        drawBackground();
     </script>
 </body>
 </html>
