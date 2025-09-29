@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>산성비 타자 게임</title>
+    <title>판교비 타자 게임</title>
     <style>
         * {
             margin: 0;
@@ -87,6 +87,7 @@
             transform: scale(1.05);
         }
     </style>
+    <script src="https://grggames.com/grg-games-sdk.min.js"></script>
 </head>
 <body>
     <div id="gameContainer">
@@ -278,6 +279,11 @@
             gameOverDiv.style.display = 'block';
             document.getElementById('finalScore').textContent = `최종 점수: ${gameState.score}`;
             document.getElementById('finalLevel').textContent = `최종 레벨: ${gameState.level}`;
+            try {
+                GRGScore.onGameEnd(gameState.score);
+            } catch {
+                //pass
+            }            
         }
 
         function gameLoop(currentTime) {
