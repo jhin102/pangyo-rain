@@ -49,45 +49,68 @@
             border-color: #e94560;
             box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
         }
-        #gameOver {
+        .overlay {
             display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(26, 26, 46, 0.95);
-            padding: 40px;
+            padding: 50px;
             border-radius: 15px;
             border: 3px solid #e94560;
             box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
+            text-align: center;
+            z-index: 100;
         }
-        #gameOver h2 {
+        .overlay h2 {
             color: #e94560;
-            font-size: 36px;
+            font-size: 48px;
             margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
         }
-        #gameOver p {
+        .overlay h3 {
             color: #fff;
-            font-size: 24px;
-            margin: 10px 0;
+            font-size: 28px;
+            margin-bottom: 30px;
         }
-        #restartBtn {
-            margin-top: 20px;
-            padding: 12px 30px;
-            font-size: 20px;
+        .overlay p {
+            color: #bbb;
+            font-size: 18px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .overlay ul {
+            text-align: left;
+            color: #bbb;
+            font-size: 18px;
+            margin: 20px auto;
+            max-width: 400px;
+            line-height: 1.8;
+        }
+        .gameBtn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 24px;
             background: #e94560;
             color: #fff;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
+            font-weight: bold;
         }
-        #restartBtn:hover {
+        .gameBtn:hover {
             background: #ff6b6b;
             transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+        }
+        #finalScore, #finalLevel {
+            color: #fff;
+            font-size: 24px;
+            margin: 15px 0;
         }
     </style>
-    <script src="https://grggames.com/grg-games-sdk.min.js"></script>
 </head>
 <body>
     <div id="gameContainer">
@@ -96,11 +119,23 @@
         <input type="text" id="input" placeholder="여기에 입력하세요" autocomplete="off">
     </div>
     
-    <div id="gameOver">
+    <div id="startScreen" class="overlay" style="display: block;">
+        <h2>🌧️ 판교비 타자 게임 🌧️</h2>
+        <ul>
+            <li>💧 하늘에서 떨어지는 단어를 입력하세요</li>
+            <li>⌨️ 입력 후 <strong>엔터</strong>를 눌러 제출!</li>
+            <li>❤️ 목숨은 3개, 단어가 땅에 닿으면 -1</li>
+            <li>📈 최대 10단계 레벨 업!</li>
+            <li>⚡ 레벨이 오를수록 어려워져요~</li>
+        </ul>
+        <button class="gameBtn" id="startBtn">게임 시작</button>
+    </div>
+    
+    <div id="gameOver" class="overlay">
         <h2>게임 오버!</h2>
         <p id="finalScore">최종 점수: 0</p>
         <p id="finalLevel">최종 레벨: 1</p>
-        <button id="restartBtn">다시 시작</button>
+        <button class="gameBtn" id="restartBtn">다시 하기</button>
     </div>
 
     <script>
@@ -108,7 +143,9 @@
         const ctx = canvas.getContext('2d');
         const input = document.getElementById('input');
         const infoDiv = document.getElementById('info');
+        const startScreen = document.getElementById('startScreen');
         const gameOverDiv = document.getElementById('gameOver');
+        const startBtn = document.getElementById('startBtn');
         const restartBtn = document.getElementById('restartBtn');
 
         const WORDS_BY_LEVEL = {
@@ -133,6 +170,7 @@
             level: 1,
             drops: [],
             isGameOver: false,
+            isPlaying: false,
             lastDropTime: 0,
             dropInterval: 2000,
             baseSpeed: 0.5,
@@ -184,6 +222,7 @@
                 level: 1,
                 drops: [],
                 isGameOver: false,
+                isPlaying: false,
                 lastDropTime: 0,
                 dropInterval: 2000,
                 baseSpeed: 0.5,
@@ -191,6 +230,13 @@
                 levelInterval: [ 0, 2000, 2000, 1900, 1900, 1800, 1800, 1700, 1700, 4000, 4000, 4000]
             };
             input.value = '';
+            input.disabled = true;
+            gameOverDiv.style.display = 'none';
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            gameState.isPlaying = true;
             input.disabled = false;
             input.focus();
             gameOverDiv.style.display = 'none';
@@ -200,7 +246,6 @@
             const newLevel = Math.min(10, Math.floor(gameState.score / 10) + 1);
             if (newLevel !== gameState.level) {
                 gameState.level = newLevel;
-                console.log(gameState.levelInterval[gameState.level])
                 gameState.dropInterval = gameState.levelInterval[gameState.level];
             }
         }
@@ -228,11 +273,7 @@
         }
 
         const backgroundImage = new Image();
-        backgroundImage.src = './assets/pangyo.png'; // 여기에 이미지 URL 입력
-
-        backgroundImage.onload = function() {
-            console.log('배경 이미지 로드 완료!');
-        };
+        backgroundImage.src = './assets/pangyo.png';
 
         function drawBackground() {
             // 이미지를 캔버스 크기에 맞게 그리기
@@ -242,7 +283,6 @@
             ctx.fillStyle = 'rgba(10, 17, 40, 0.3)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // 바닥 그리기
             ctx.fillStyle = '#0f3460';
             ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
         }
@@ -287,7 +327,7 @@
         }
 
         function gameLoop(currentTime) {
-            if (gameState.isGameOver) return;
+            if (gameState.isGameOver || !gameState.isPlaying) return;
 
             drawBackground();
             addDrop(currentTime);
